@@ -11,7 +11,7 @@ async def run(query: str):
 
 
 with gr.Blocks(theme=gr.themes.Default(primary_hue="sky")) as ui:
-    gr.Markdown("# Deep Research")
+    gr.Markdown("# Marley AI - Do you SEE???")
     query_textbox = gr.Textbox(label="What topic would you like to research?")
     run_button = gr.Button("Run", variant="primary")
     report = gr.Markdown(label="Report")
