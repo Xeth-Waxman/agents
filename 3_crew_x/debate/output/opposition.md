@@ -1,0 +1,13 @@
+The proposition that there must be absolutely no limits on parents’ ability to use genetic information to select optimal traits in their children is deeply problematic and ethically unsound. Unrestricted genetic selection opens a Pandora’s box of moral, social, and biological consequences that cannot be ignored.
+
+First, absolute freedom in genetic selection threatens to exacerbate social inequalities rather than reduce them. Access to such advanced technologies would be limited by socioeconomic status, creating a genetic “underclass” and a genetic “elite.” This would deepen existing divides, entrench discrimination, and foster an oppressive meritocracy where worth is measured by engineered traits rather than inherent human dignity.
+
+Second, the notion of choosing “optimal” traits is inherently subjective and culturally biased. Who decides what traits are desirable? Such power risks reinforcing harmful stereotypes and prejudices, promoting conformity, and reducing human diversity—an invaluable source of resilience and creativity. Limiting genetic selection protects against homogenization of humanity and the loss of individuality.
+
+Third, there are serious safety concerns. Our understanding of genetics is far from complete; genes interact in complex ways, and selecting for certain traits could inadvertently cause unforeseen medical conditions or negative psychological effects. Without limits, experimentation on future generations becomes reckless and irresponsible.
+
+Fourth, the absolute focus on parental autonomy disregards the rights of the child as an independent individual. Children should not be treated as products designed according to parental preference but as persons with their own right to an open future. Limits are necessary to safeguard their human rights and prevent their reduction to mere genetic projects.
+
+Finally, the possibility of eugenics looms large. Unchecked genetic selection could revive dangerous ideologies advocating for “improving” humanity through selective breeding, leading to discrimination and human rights abuses on a massive scale.
+
+In sum, while the potential benefits of genetic information are significant, there must be carefully crafted limits to ensure ethical use, protect societal equality, uphold human rights, and preserve genetic diversity. Absolute freedom in this domain is not just risky; it is reckless. Therefore, the motion must be strongly rejected.
