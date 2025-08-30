@@ -1,41 +1,38 @@
+import os
+from dotenv import load_dotenv
+load_dotenv(dotenv_path="../../.env", override=True)
+
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai.agents.agent_builder.base_agent import BaseAgent
-from typing import List
-from pydantic import BaseModel, Field
 from crewai_tools import SerperDevTool
+from pydantic import BaseModel, Field
+from typing import List
+from .tools.push_tool import PushNotificationTool
+from crewai.memory import LongTermMemory, ShortTermMemory, EntityMemory
+from crewai.memory.storage.rag_storage import RAGStorage
+from crewai.memory.storage.ltm_sqlite_storage import LTMSQLiteStorage
 
-class TrendingCompanies(BaseModel):
-    """ A company that is in the news and trending"""
-    name: str = Field(..., description="The name of the company")
-    ticker: str = Field(..., description="The stock ticker of the company")
-    reason: str = Field(..., description="The reason the company is trending")
+class TrendingCompany(BaseModel):
+    """ A company that is in the news and attracting attention """
+    name: str = Field(description="Company name")
+    ticker: str = Field(description="Stock ticker symbol")
+    reason: str = Field(description="Reason this company is trending in the news")
 
-class TrendingCompaniesList(BaseModel):
-    """ A list of trending companies that are in the news"""
-    trending_companies: List[TrendingCompanies] = Field(..., description="The list of trending companies")
+class TrendingCompanyList(BaseModel):
+    """ List of multiple trending companies that are in the news """
+    companies: List[TrendingCompany] = Field(description="List of companies trending in the news")
 
-class InvestmentProspectus(BaseModel):
-    """ A detailed investment prospectus for a company"""
-    name: str = Field(..., description="The name of the company")
-    ticker: str = Field(..., description="The stock ticker of the company")
-    reason: str = Field(..., description="The reason the company is or is not a good investment")
-    summary: str = Field(..., description="A summary of the company")
-    market_position: str = Field(..., description="The market position of the company and relative competition")
-    future_outlook: str = Field(..., description="The future outlook for the company")
-    full_report: str = Field(..., description="A full report of the company")
+class TrendingCompanyResearch(BaseModel):
+    """ Detailed research on a company """
+    name: str = Field(description="Company name")
+    market_position: str = Field(description="Current market position and competitive analysis")
+    future_outlook: str = Field(description="Future outlook and growth prospects")
+    investment_potential: str = Field(description="Investment potential and suitability for investment")
 
-class InvestmentProspectusList(BaseModel):
-    """ A list of investment prospectuses for a list of companies"""
-    investment_prospectuses: List[InvestmentProspectus] = Field(..., description="The list of investment prospectuses")
+class TrendingCompanyResearchList(BaseModel):
+    """ A list of detailed research on all the companies """
+    research_list: List[TrendingCompanyResearch] = Field(description="Comprehensive research on all trending companies")
 
-class BestInvestment(BaseModel):
-    """ The best investment from a list of investment prospectuses"""
-    name: str = Field(..., description="The name of the company")
-    ticker: str = Field(..., description="The stock ticker of the company")
-    reason: str = Field(..., description="The reason the company is the best investment")
-    summary: str = Field(..., description="A summary of the company")
-    investment_forecast: str = Field(..., description="The anticipated annual return on investment for the company over a five-year period.")
 
 @CrewBase
 class StockPicker():
@@ -43,50 +40,90 @@ class StockPicker():
 
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
-    serper_tool = SerperDevTool()
 
     @agent
     def trending_company_finder(self) -> Agent:
-        return Agent(config=self.agents_config['trending_company_finder'], tools=[self.serper_tool] )
+        return Agent(config=self.agents_config['trending_company_finder'],
+                     tools=[SerperDevTool()], memory=True)
     
     @agent
     def financial_researcher(self) -> Agent:
-        return Agent(config=self.agents_config['financial_researcher'], tools=[self.serper_tool])
+        return Agent(config=self.agents_config['financial_researcher'], 
+                     tools=[SerperDevTool()])
 
     @agent
     def stock_picker(self) -> Agent:
-        return Agent(config=self.agents_config['stock_picker'])
-    
-    @agent
-    def manager(self) -> Agent:
-        return Agent(config=self.agents_config['manager'])
+        return Agent(config=self.agents_config['stock_picker'], 
+                     tools=[PushNotificationTool()], memory=True)
     
     @task
     def find_trending_companies(self) -> Task:
-        return Task(config=self.tasks_config['find_trending_companies'], output_pydantic=TrendingCompaniesList)
+        return Task(
+            config=self.tasks_config['find_trending_companies'],
+            output_pydantic=TrendingCompanyList,
+        )
 
     @task
     def research_trending_companies(self) -> Task:
-        return Task(config=self.tasks_config['research_trending_companies'], output_pydantic=InvestmentProspectusList)
+        return Task(
+            config=self.tasks_config['research_trending_companies'],
+            output_pydantic=TrendingCompanyResearchList,
+        )
 
     @task
     def pick_best_company(self) -> Task:
-        return Task(config=self.tasks_config['pick_best_company'], expected_output=BestInvestment)
+        return Task(
+            config=self.tasks_config['pick_best_company'],
+        )
+    
+
+
 
     @crew
     def crew(self) -> Crew:
         """Creates the StockPicker crew"""
 
-        manager = Agent(config=self.agents_config['manager'], allow_delegation=True)
-
+        manager = Agent(
+            config=self.agents_config['manager'],
+            allow_delegation=True
+        )
+            
         return Crew(
             agents=self.agents,
-            tasks=self.tasks,
+            tasks=self.tasks, 
             process=Process.hierarchical,
             verbose=True,
-            manager_agent=manager
+            manager_agent=manager,
+            memory=True,
+            # Long-term memory for persistent storage across sessions
+            long_term_memory = LongTermMemory(
+                storage=LTMSQLiteStorage(
+                    db_path="./memory/long_term_memory_storage.db"
+                )
+            ),
+            # Short-term memory for current context using RAG
+            short_term_memory = ShortTermMemory(
+                storage = RAGStorage(
+                        embedder_config={
+                            "provider": "openai",
+                            "config": {
+                                "model": 'text-embedding-3-small'
+                            }
+                        },
+                        type="short_term",
+                        path="./memory/"
+                    )
+                ),            # Entity memory for tracking key information about entities
+            entity_memory = EntityMemory(
+                storage=RAGStorage(
+                    embedder_config={
+                        "provider": "openai",
+                        "config": {
+                            "model": 'text-embedding-3-small'
+                        }
+                    },
+                    type="short_term",
+                    path="./memory/"
+                )
+            ),
         )
-
-if __name__ == "__main__":
-    crew = StockPicker().crew()
-    crew.kickoff()
