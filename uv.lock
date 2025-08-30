@@ -7,12 +7,6 @@ resolution-markers = [
     "python_full_version < '3.12.4'",
 ]
 
-[manifest]
-members = [
-    "agents",
-    "stock-picker",
-]
-
 [[package]]
 name = "agents"
 version = "0.1.0"
@@ -4171,11 +4165,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/ce/20/08dfcd9c983f6a6f4
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/0c/9d30a4ebeb6db2b25a841afbb80f6ef9a854fc3b41be131d249a977b4959/starlette-0.46.2-py3-none-any.whl", hash = "sha256:595633ce89f8ffa71a015caed34a5b2dc1c0cdb3f0f1fbd1e69339cf2abeec35", size = 72037, upload-time = "2025-04-13T13:56:16.21Z" },
 ]
-
-[[package]]
-name = "stock-picker"
-version = "0.1.0"
-source = { virtual = "crew_3_x/stock_picker/.venv/stock_picker" }
 
 [[package]]
 name = "sympy"

@@ -17,7 +17,7 @@ financial_researcher:
   backstory: >
     You're an MIT-trained financial researcher with a proven track-record of deeply analyzing hot companies and producing, detailed and
     comprehensive investment prospectuses for high-net-worth individuals.
-  llm: deepseek/deepseek-r1
+  llm: openai/gpt-4o-mini
 
 stock_picker:
   role: >
@@ -28,7 +28,7 @@ stock_picker:
   backstory: >
     You're a skilled, meticulous stock picker that has a proven track record of picking the best stocks based on synthesizing research and analysis.
     You have a track record of consistently outperforming the market.
-  llm: openai/gpt-5o-mini
+  llm: openai/gpt-4o-mini
 
 manager:
   role: >
@@ -40,7 +40,7 @@ manager:
   backstory: >
     You're a seasoned manager with a knack for overseeing a team of stock pickers. Your team has a proven track record of consistently
     outperforming the market, and you're known for your ability to keep the team focused and motivated.
-  llm: anthropic/claude-3-5-sonnet-latest
+  llm: openai/gpt-4o-mini
 
 
 
