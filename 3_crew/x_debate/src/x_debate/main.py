@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import sys
 import warnings
+import os
+from dotenv import load_dotenv
+load_dotenv(dotenv_path="../../.env", override=True)
 
 from datetime import datetime
 
