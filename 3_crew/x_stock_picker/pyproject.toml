@@ -1,0 +1,23 @@
+[project]
+name = "x_stock_picker"
+version = "0.1.0"
+description = "x_stock_picker using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.177.0,<1.0.0"
+]
+
+[project.scripts]
+x_stock_picker = "x_stock_picker.main:run"
+run_crew = "x_stock_picker.main:run"
+train = "x_stock_picker.main:train"
+replay = "x_stock_picker.main:replay"
+test = "x_stock_picker.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"
