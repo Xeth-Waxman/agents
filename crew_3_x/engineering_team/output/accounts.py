@@ -1,131 +1,113 @@
-# accounts.py - Trading Simulation Account Management System
-
 from datetime import datetime
-from typing import Optional, Dict, List, Tuple
-from enum import Enum
-
-
-class TransactionType(Enum):
-    """Enumeration for different types of transactions."""
-    DEPOSIT = "deposit"
-    WITHDRAWAL = "withdrawal"
-    BUY = "buy"
-    SELL = "sell"
-
+from typing import Dict, List, Tuple, Optional
 
 def get_share_price(symbol: str) -> float:
-    """Returns the current price of a share for a given stock symbol.
-    
-    This is a test implementation that returns fixed prices for specific symbols.
+    """Retrieves the current price of a stock given its symbol.
+    Test implementation returns fixed prices for AAPL, TSLA, and GOOGL.
     
     Args:
-        symbol: Stock symbol (e.g., 'AAPL', 'TSLA', 'GOOGL')
+        symbol: Stock symbol to get price for
         
     Returns:
-        The current price of the share
+        Current price of the stock
         
     Raises:
-        ValueError: If the symbol is not recognized
+        ValueError: If symbol is not recognized
     """
     prices = {
-        'AAPL': 150.00,
-        'TSLA': 250.00,
-        'GOOGL': 2800.00
+        'AAPL': 150.0,
+        'TSLA': 700.0,
+        'GOOGL': 2800.0
     }
-    
     if symbol not in prices:
         raise ValueError(f"Unknown stock symbol: {symbol}")
-    
     return prices[symbol]
 
 
 class Account:
-    """Manages user accounts for the trading simulation platform.
+    """Represents a user's account, managing funds, transactions, and portfolio holdings."""
     
-    This class handles all account operations including deposits, withdrawals,
-    share trading, and portfolio tracking.
-    """
-    
-    def __init__(self, initial_deposit: float = 0.0):
-        """Initializes a new account with an optional initial deposit.
+    def __init__(self, account_id: str, initial_deposit: float):
+        """Initializes a new account with a unique account_id, sets initial deposit 
+        and balance, and initializes holdings and transaction history.
         
         Args:
-            initial_deposit: The initial amount to deposit (default: 0.0)
+            account_id: Unique identifier for the account
+            initial_deposit: Initial funds to deposit into the account
             
         Raises:
-            ValueError: If initial deposit is negative
+            ValueError: If initial_deposit is negative
         """
         if initial_deposit < 0:
             raise ValueError("Initial deposit cannot be negative")
+            
+        self.account_id = account_id
+        self.balance = initial_deposit
+        self.initial_deposit = initial_deposit
+        self.holdings: Dict[str, int] = {}
+        self.transaction_history: List[Dict] = []
         
-        self._cash_balance = initial_deposit
-        self._initial_deposit = initial_deposit
-        self._holdings = {}  # {symbol: quantity}
-        self._transactions = []  # List of transaction records
-        
+        # Record initial deposit as first transaction
         if initial_deposit > 0:
-            self._record_transaction(
-                TransactionType.DEPOSIT,
-                amount=initial_deposit
-            )
-    
-    def _record_transaction(self, transaction_type: TransactionType, 
-                          amount: float = None, symbol: str = None, 
-                          quantity: int = None, price: float = None):
-        """Records a transaction in the transaction history.
-        
-        Args:
-            transaction_type: Type of transaction
-            amount: Amount of money (for deposits/withdrawals)
-            symbol: Stock symbol (for buy/sell)
-            quantity: Number of shares (for buy/sell)
-            price: Price per share (for buy/sell)
-        """
-        transaction = {
-            'timestamp': datetime.now(),
-            'type': transaction_type.value,
-            'amount': amount,
-            'symbol': symbol,
-            'quantity': quantity,
-            'price': price
-        }
-        self._transactions.append(transaction)
+            self.transaction_history.append({
+                'type': 'deposit',
+                'amount': initial_deposit,
+                'timestamp': datetime.now(),
+                'description': 'Initial deposit'
+            })
     
     def deposit_funds(self, amount: float):
-        """Adds funds to the user's account.
+        """Increases the account balance by the specified amount.
+        Validates that the deposit amount is positive.
         
         Args:
-            amount: The amount to deposit
+            amount: Amount to deposit
             
         Raises:
-            ValueError: If the amount is not positive
+            ValueError: If amount is not positive
         """
         if amount <= 0:
             raise ValueError("Deposit amount must be positive")
+            
+        self.balance += amount
+        self.initial_deposit += amount
         
-        self._cash_balance += amount
-        self._record_transaction(TransactionType.DEPOSIT, amount=amount)
+        self.transaction_history.append({
+            'type': 'deposit',
+            'amount': amount,
+            'timestamp': datetime.now(),
+            'description': f'Deposit of ${amount:.2f}'
+        })
     
     def withdraw_funds(self, amount: float):
-        """Withdraws funds from the user's account.
+        """Decreases the account balance by the specified amount, if sufficient funds exist.
+        Prevents withdrawal resulting in negative balance.
         
         Args:
-            amount: The amount to withdraw
+            amount: Amount to withdraw
             
         Raises:
-            ValueError: If the amount is not positive or would result in negative balance
+            ValueError: If amount is not positive or would result in negative balance
         """
         if amount <= 0:
             raise ValueError("Withdrawal amount must be positive")
+            
+        if self.balance - amount < 0:
+            raise ValueError(f"Insufficient funds. Available balance: ${self.balance:.2f}")
+            
+        self.balance -= amount
         
-        if amount > self._cash_balance:
-            raise ValueError(f"Insufficient funds. Available balance: ${self._cash_balance:.2f}")
-        
-        self._cash_balance -= amount
-        self._record_transaction(TransactionType.WITHDRAWAL, amount=amount)
+        self.transaction_history.append({
+            'type': 'withdrawal',
+            'amount': amount,
+            'timestamp': datetime.now(),
+            'description': f'Withdrawal of ${amount:.2f}'
+        })
     
     def buy_shares(self, symbol: str, quantity: int):
-        """Records the purchase of shares for a given stock symbol.
+        """Records the purchase of a specified quantity of shares for a given stock symbol.
+        Updates holdings and decrements balance by the shares' total cost.
+        Validates sufficient balance for the transaction.
         
         Args:
             symbol: Stock symbol to buy
@@ -136,191 +118,132 @@ class Account:
         """
         if quantity <= 0:
             raise ValueError("Quantity must be positive")
+            
+        share_price = get_share_price(symbol)
+        total_cost = share_price * quantity
         
-        # Get current share price
-        try:
-            price = get_share_price(symbol)
-        except ValueError as e:
-            raise ValueError(str(e))
+        if self.balance < total_cost:
+            raise ValueError(f"Insufficient funds to buy {quantity} shares of {symbol}. " +
+                           f"Cost: ${total_cost:.2f}, Available: ${self.balance:.2f}")
         
-        total_cost = price * quantity
+        self.balance -= total_cost
         
-        # Check if user has sufficient funds
-        if total_cost > self._cash_balance:
-            raise ValueError(f"Insufficient funds to buy {quantity} shares of {symbol}. " 
-                           f"Required: ${total_cost:.2f}, Available: ${self._cash_balance:.2f}")
-        
-        # Execute the purchase
-        self._cash_balance -= total_cost
-        
-        # Update holdings
-        if symbol not in self._holdings:
-            self._holdings[symbol] = 0
-        self._holdings[symbol] += quantity
-        
-        # Record transaction
-        self._record_transaction(
-            TransactionType.BUY,
-            amount=total_cost,
-            symbol=symbol,
-            quantity=quantity,
-            price=price
-        )
+        if symbol in self.holdings:
+            self.holdings[symbol] += quantity
+        else:
+            self.holdings[symbol] = quantity
+            
+        self.transaction_history.append({
+            'type': 'buy',
+            'symbol': symbol,
+            'quantity': quantity,
+            'price_per_share': share_price,
+            'total_cost': total_cost,
+            'timestamp': datetime.now(),
+            'description': f'Bought {quantity} shares of {symbol} at ${share_price:.2f}/share'
+        })
     
     def sell_shares(self, symbol: str, quantity: int):
-        """Records the sale of shares for a given stock symbol.
+        """Records the sale of a specified quantity of shares for a given stock symbol.
+        Updates holdings and increments balance by the shares' total sale value.
+        Validates sufficient shares are owned for the transaction.
         
         Args:
             symbol: Stock symbol to sell
             quantity: Number of shares to sell
             
         Raises:
-            ValueError: If quantity is not positive or insufficient shares
+            ValueError: If quantity is not positive or insufficient shares owned
         """
         if quantity <= 0:
             raise ValueError("Quantity must be positive")
+            
+        if symbol not in self.holdings or self.holdings[symbol] < quantity:
+            owned = self.holdings.get(symbol, 0)
+            raise ValueError(f"Insufficient shares to sell. You own {owned} shares of {symbol}")
         
-        # Check if user has the shares to sell
-        if symbol not in self._holdings or self._holdings[symbol] < quantity:
-            current_holdings = self._holdings.get(symbol, 0)
-            raise ValueError(f"Insufficient shares to sell. You have {current_holdings} shares of {symbol}")
+        share_price = get_share_price(symbol)
+        total_sale_value = share_price * quantity
         
-        # Get current share price
-        try:
-            price = get_share_price(symbol)
-        except ValueError as e:
-            raise ValueError(str(e))
+        self.balance += total_sale_value
+        self.holdings[symbol] -= quantity
         
-        total_revenue = price * quantity
-        
-        # Execute the sale
-        self._cash_balance += total_revenue
-        self._holdings[symbol] -= quantity
-        
-        # Remove symbol from holdings if quantity becomes 0
-        if self._holdings[symbol] == 0:
-            del self._holdings[symbol]
-        
-        # Record transaction
-        self._record_transaction(
-            TransactionType.SELL,
-            amount=total_revenue,
-            symbol=symbol,
-            quantity=quantity,
-            price=price
-        )
+        if self.holdings[symbol] == 0:
+            del self.holdings[symbol]
+            
+        self.transaction_history.append({
+            'type': 'sell',
+            'symbol': symbol,
+            'quantity': quantity,
+            'price_per_share': share_price,
+            'total_sale_value': total_sale_value,
+            'timestamp': datetime.now(),
+            'description': f'Sold {quantity} shares of {symbol} at ${share_price:.2f}/share'
+        })
     
     def calculate_portfolio_value(self) -> float:
-        """Calculates the total value of the user's portfolio.
+        """Calculates the total value of current holdings using get_share_price(symbol) 
+        for each stock.
         
         Returns:
-            The total value including cash and all stock holdings
+            Total value of all stock holdings
         """
-        total_value = self._cash_balance
-        
-        for symbol, quantity in self._holdings.items():
-            try:
-                price = get_share_price(symbol)
-                total_value += price * quantity
-            except ValueError:
-                # Skip unknown symbols in portfolio calculation
-                pass
-        
+        total_value = 0.0
+        for symbol, quantity in self.holdings.items():
+            share_price = get_share_price(symbol)
+            total_value += share_price * quantity
         return total_value
     
-    def calculate_profit_loss(self) -> float:
-        """Calculates the profit or loss compared to the initial deposit.
+    def calculate_profit_or_loss(self) -> float:
+        """Calculates profit or loss as the difference between the current account value 
+        (balance + portfolio value) and the initial deposit.
         
         Returns:
-            The profit (positive) or loss (negative) amount
+            Profit (positive) or loss (negative) amount
         """
-        current_value = self.calculate_portfolio_value()
-        
-        # Calculate total deposits (initial + any additional deposits - withdrawals)
-        total_deposits = 0
-        for transaction in self._transactions:
-            if transaction['type'] == TransactionType.DEPOSIT.value:
-                total_deposits += transaction['amount']
-            elif transaction['type'] == TransactionType.WITHDRAWAL.value:
-                total_deposits -= transaction['amount']
-        
-        return current_value - total_deposits
+        current_total_value = self.balance + self.calculate_portfolio_value()
+        return current_total_value - self.initial_deposit
     
-    def get_holdings(self) -> Dict[str, int]:
-        """Returns the user's current stock holdings.
+    def report_holdings(self) -> Dict[str, Dict]:
+        """Returns a detailed report of all stock holdings and their respective quantities.
         
         Returns:
-            Dictionary with stock symbols as keys and share quantities as values
+            Dictionary with stock symbols as keys and details as values
         """
-        return self._holdings.copy()
+        report = {}
+        for symbol, quantity in self.holdings.items():
+            share_price = get_share_price(symbol)
+            report[symbol] = {
+                'quantity': quantity,
+                'current_price': share_price,
+                'total_value': share_price * quantity
+            }
+        return report
     
-    def get_transactions(self) -> List[Dict]:
-        """Returns a list of all transactions made by the user.
+    def report_profit_or_loss(self) -> Dict[str, float]:
+        """Returns the current profit or loss calculated via calculate_profit_or_loss().
         
         Returns:
-            List of transaction dictionaries
+            Dictionary with detailed profit/loss information
         """
-        return self._transactions.copy()
-    
-    def report_profit_loss(self, timestamp: Optional[datetime] = None) -> float:
-        """Reports the profit or loss of the user at the specified time.
+        portfolio_value = self.calculate_portfolio_value()
+        total_value = self.balance + portfolio_value
+        profit_or_loss = self.calculate_profit_or_loss()
         
-        Args:
-            timestamp: The point in time to calculate profit/loss (default: current time)
-            
+        return {
+            'cash_balance': self.balance,
+            'portfolio_value': portfolio_value,
+            'total_value': total_value,
+            'initial_deposit': self.initial_deposit,
+            'profit_or_loss': profit_or_loss,
+            'return_percentage': (profit_or_loss / self.initial_deposit * 100) if self.initial_deposit > 0 else 0
+        }
+    
+    def list_transactions(self) -> List[Dict]:
+        """Provides a complete list of all transactions made by the account, 
+        including deposits, withdrawals, and trades.
+        
         Returns:
-            The profit or loss at the specified time
+            List of transaction dictionaries in chronological order
         """
-        if timestamp is None:
-            # Use current profit/loss
-            return self.calculate_profit_loss()
-        
-        # Calculate profit/loss at a specific point in time
-        # Reconstruct the state at that timestamp
-        cash = 0
-        holdings = {}
-        total_deposits = 0
-        
-        for transaction in self._transactions:
-            if transaction['timestamp'] > timestamp:
-                break
-            
-            if transaction['type'] == TransactionType.DEPOSIT.value:
-                cash += transaction['amount']
-                total_deposits += transaction['amount']
-            elif transaction['type'] == TransactionType.WITHDRAWAL.value:
-                cash -= transaction['amount']
-                total_deposits -= transaction['amount']
-            elif transaction['type'] == TransactionType.BUY.value:
-                cash -= transaction['amount']
-                symbol = transaction['symbol']
-                if symbol not in holdings:
-                    holdings[symbol] = 0
-                holdings[symbol] += transaction['quantity']
-            elif transaction['type'] == TransactionType.SELL.value:
-                cash += transaction['amount']
-                symbol = transaction['symbol']
-                holdings[symbol] -= transaction['quantity']
-                if holdings[symbol] == 0:
-                    del holdings[symbol]
-        
-        # Calculate portfolio value at that time
-        portfolio_value = cash
-        for symbol, quantity in holdings.items():
-            try:
-                price = get_share_price(symbol)
-                portfolio_value += price * quantity
-            except ValueError:
-                pass
-        
-        return portfolio_value - total_deposits
-    
-    @property
-    def cash_balance(self) -> float:
-        """Returns the current cash balance."""
-        return self._cash_balance
-    
-    @property
-    def initial_deposit(self) -> float:
-        """Returns the initial deposit amount."""
-        return self._initial_deposit
+        return self.transaction_history.copy()

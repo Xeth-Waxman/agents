@@ -1,59 +1,68 @@
 ```markdown
-# Trading Simulation Account Management System Module Design
 
-## Overview
+# Module: TradingAccountManagement
 
-This document outlines the detailed design for a simple account management system for a trading simulation platform. The system is contained in a single Python module and is defined using the following classes and methods. This system allows users to create accounts, manage transactions, and monitor their financial performance within the simulation.
+This module implements a simple account management system for a trading simulation platform, allowing users to manage funds, perform trades, and track their portfolio performance. Below is a detailed design outlining the classes and methods within this module.
 
-## Classes and Methods
+## Class: Account
 
-### Class: `AccountManager`
+**Description**: Represents a user's account, managing funds, transactions, and portfolio holdings.
 
-This class is responsible for managing user accounts, including financial transactions and portfolio tracking.
+### Attributes:
+- **account_id**: Unique identifier for the account.
+- **balance**: The current balance available for transactions.
+- **initial_deposit**: The total initial funds deposited into the account.
+- **holdings**: Dictionary storing the quantity of each stock owned, keyed by stock symbol.
+- **transaction_history**: List of transactions detailing actions taken by the user.
+  
+### Methods:
 
-#### Methods:
+#### `__init__(self, account_id: str, initial_deposit: float):`
+- Initializes a new account with a unique `account_id`, sets initial deposit and balance, and initializes holdings and transaction history.
 
-- `__init__(self, initial_deposit: float = 0.0)`
-  - Initializes a new account with an optional initial deposit. Sets up necessary data structures for tracking transactions and portfolio holdings.
+#### `deposit_funds(self, amount: float):`
+- Increases the account balance by the specified amount.
+- Validates that the deposit amount is positive.
 
-- `deposit_funds(self, amount: float)`
-  - Adds funds to the user's account. Verifies that the deposit amount is positive.
+#### `withdraw_funds(self, amount: float):`
+- Decreases the account balance by the specified amount, if sufficient funds exist.
+- Prevents withdrawal resulting in negative balance.
 
-- `withdraw_funds(self, amount: float)`
-  - Withdraws funds from the user's account. Ensures that the withdrawal does not result in a negative balance.
+#### `buy_shares(self, symbol: str, quantity: int):`
+- Records the purchase of a specified quantity of shares for a given stock symbol.
+- Updates holdings and decrements balance by the shares' total cost.
+- Validates sufficient balance for the transaction.
 
-- `buy_shares(self, symbol: str, quantity: int)`
-  - Records the purchase of shares for a given stock symbol and quantity. Checks that the user has sufficient funds for the purchase.
+#### `sell_shares(self, symbol: str, quantity: int):`
+- Records the sale of a specified quantity of shares for a given stock symbol.
+- Updates holdings and increments balance by the shares' total sale value.
+- Validates sufficient shares are owned for the transaction.
 
-- `sell_shares(self, symbol: str, quantity: int)`
-  - Records the sale of shares for a given stock symbol and quantity. Ensures that the user has enough shares to sell.
+#### `calculate_portfolio_value(self):`
+- Calculates the total value of current holdings using `get_share_price(symbol)` for each stock.
 
-- `calculate_portfolio_value(self) -> float`
-  - Calculates the total value of the user's portfolio based on the current share prices.
+#### `calculate_profit_or_loss(self):`
+- Calculates profit or loss as the difference between the current account value (balance + portfolio value) and the initial deposit.
 
-- `calculate_profit_loss(self) -> float`
-  - Calculates the profit or loss compared to the initial deposit.
+#### `report_holdings(self):`
+- Returns a detailed report of all stock holdings and their respective quantities.
 
-- `get_holdings(self) -> dict`
-  - Returns the user's current stock holdings as a dictionary with stock symbols as keys and share quantities as values.
+#### `report_profit_or_loss(self):`
+- Returns the current profit or loss calculated via `calculate_profit_or_loss(self)`.
 
-- `get_transactions(self) -> list`
-  - Returns a list of all transactions (deposits, withdrawals, buys, and sells) made by the user.
+#### `list_transactions(self):`
+- Provides a complete list of all transactions made by the account, including deposits, withdrawals, and trades.
 
-- `report_profit_loss(self, timestamp: Optional[datetime] = None) -> float`
-  - Reports the profit or loss of the user at the specified time (defaults to the current time if not specified).
+## Function: get_share_price(symbol: str) -> float
 
-### Function: `get_share_price(symbol: str) -> float`
+**Description**: Retrieves the current price of a stock given its symbol. For this design, test implementation returns fixed prices for AAPL, TSLA, and GOOGL.
 
-- External to the `AccountManager` class, this function returns the current price of a share for a given stock symbol. In a testing environment, it returns fixed prices for "AAPL", "TSLA", and "GOOGL".
+**Test Implementation**:
+- Returns predefined prices for symbols:
+  - 'AAPL': $150
+  - 'TSLA': $700
+  - 'GOOGL': $2800
 
-### Usage Notes
-
-- Ensure all monetary transactions are validated to prevent negative balances.
-- Verify user holdings before executing buy/sell transactions to ensure transaction integrity.
-- Use `get_share_price()` to fetch current prices consistently across portfolio and transaction calculations.
-
-## End of Design Document
 ```
 
-This design provides a structured approach to implementing the account management system with a clear separation of responsibility across various methods within an `AccountManager` class. It ensures all requirements such as tracking transactions, managing funds, and maintaining share integrity are addressed.
+This design outlines the flow and interactions needed for managing a user's account in a trading simulation, ensuring comprehensive functionality along with appropriate validations to maintain the integrity of user funds and trades.
